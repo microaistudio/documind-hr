@@ -16,3 +16,12 @@ __pycache__/
 *.pyc
 dist/
 build/
+venv/
+node_modules/
+.env*
+logs/
+uploads/
+__pycache__/
+*.pyc
+dist/
+build/
