@@ -1,6 +1,6 @@
 venv/
 node_modules/
-.env*
+# .env*
 logs/
 uploads/
 __pycache__/
@@ -9,7 +9,7 @@ dist/
 build/
 venv/
 node_modules/
-.env*
+# .env*
 logs/
 uploads/
 __pycache__/
