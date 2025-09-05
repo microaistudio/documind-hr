@@ -1,0 +1,53 @@
+cd ~/projects/documind-hr
+chmod +x documind_hr.sh
+
+
+ENV_FILE=.env.hr uvicorn server_hr:app --host 0.0.0.0 --port 9001 --reload
+
+
+./documind_hr.sh start
+./documind_hr.sh status
+./documind_hr.sh log
+./documind_hr.sh stop
+
+
+./scripts/documind.sh                 # interactive menu
+./scripts/documind.sh start service both
+./scripts/documind.sh logs backend
+./scripts/documind.sh start console backend
+
+
+
+Pstgres Login/Bash
+
+1) Make sure psql exists
+psql --version || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+
+2) Load your .env.hr so we get DATABASE_URL
+cd ~/projects/documind-hr
+set -a; source .env.hr; set +a
+echo "$DATABASE_URL"
+
+
+If that prints a DSN (e.g. postgresql://postgres:postgres@127.0.0.1:5432/documind_hr), you’re set.
+
+3) Log in (interactive psql)
+psql "$DATABASE_URL"
+
+
+Handy psql checks once inside:
+
+\conninfo
+\dt
+\dx
+
+
+Type \q to quit.
+
+
+
+Build/Refresh
+
+cd ~/projects/documind-hr/ui
+npm run build
+pm2 restart documind-ui

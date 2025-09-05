@@ -1,0 +1,71 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover { filter: drop-shadow(0 0 2em #646cffaa); }
+.logo.react:hover { filter: drop-shadow(0 0 2em #61dafbaa); }
+
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo { animation: logo-spin infinite 20s linear; }
+}
+
+.card { padding: 2em; }
+.read-the-docs { color: #888; }
+
+/* =======================================================================
+   Ops UI — Compact modal styles (en/hi parity)
+   Container: no scroll (overflow hidden), fixed max height.
+   Body: the only scroller (so header/footer stay pinned).
+   ======================================================================= */
+/* ---------- GLOBAL OVERRIDE FOR OPS MODALS (no JSX changes needed) ---------- */
+/* Target the white modal card inside the full-screen overlay */
+.fixed.inset-0 > div[class*="bg-white"] {
+  max-width: 900px !important;
+  width: 92vw !important;
+  max-height: 86vh !important;
+  margin: 0 auto !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18) !important;
+  background: #fff !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important; /* container doesn't scroll */
+  z-index: 9999 !important;
+}
+
+/* Make the middle section (body) the scroller and wrap long OCR lines */
+.fixed.inset-0 > div[class*="bg-white"] > *:nth-child(2) {
+  min-height: 0 !important;
+  overflow: auto !important;       /* only body scrolls */
+  white-space: pre-wrap !important; /* preserve newlines, allow wrapping */
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+/* Keep table headers visible in View/Match */
+.fixed.inset-0 > div[class*="bg-white"] thead {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+}
+
+/* Optional: tighter padding on OCR pre blocks so lines wrap nicely */
+.fixed.inset-0 > div[class*="bg-white"] pre {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}

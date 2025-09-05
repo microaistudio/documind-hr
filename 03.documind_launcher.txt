@@ -1,0 +1,32 @@
+Using your documind.sh launcher
+# stop backend only
+./scripts/documind.sh stop service backend
+
+# stop UI only
+./scripts/documind.sh stop service ui
+
+# stop both
+./scripts/documind.sh stop service both
+
+Using systemd directly
+# backend
+sudo systemctl stop documind-backend.service
+
+# UI (whichever you use)
+sudo systemctl stop frontend.service        # if your UI service is named 'frontend.service'
+# or
+sudo systemctl stop documind-ui.service
+
+Verify it’s down (optional)
+sudo systemctl status documind-backend.service
+sudo systemctl status frontend.service
+ss -ltn | grep -E ':9000|:5173'   # no lines = ports freed
+
+If a port is still stuck
+# kill whatever is still listening (only if needed)
+sudo fuser -k 9000/tcp
+sudo fuser -k 5173/tcp
+
+Prevent auto-start at boot (optional)
+sudo systemctl disable documind-backend.service
+sudo systemctl disable frontend.service

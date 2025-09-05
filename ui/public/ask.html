@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Ask DocuMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--bg:#0f172a;--card:#111827;--ink:#e5e7eb;--fade:#9ca3af;--accent:#7c3aed}
+    html,body{height:100%} body{margin:0;background:linear-gradient(180deg,#0b1024,#0e1633);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto;color:var(--ink)}
+    .wrap{max-width:960px;margin:0 auto;padding:32px}
+    .bar{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+    .bar h1{font-size:20px;margin:0 12px 0 0}
+    .bar .pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:6px 10px;color:var(--fade)}
+    .card{background:rgba(17,24,39,.8);border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    .row{display:flex;gap:10px;align-items:center}
+    .row > *{flex:1}
+    input,select,button,textarea{border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#0b1020;color:var(--ink);padding:12px}
+    input::placeholder,textarea::placeholder{color:#6b7280}
+    button{background:var(--accent);border:none;cursor:pointer;font-weight:600}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .chat{margin-top:16px;padding:16px;min-height:300px;max-height:70vh;overflow:auto}
+    .msg{padding:12px 14px;margin:8px 0;border-radius:12px;max-width:85%}
+    .user{background:#1e293b  }
+    .bot{background:#0b1227;border:1px solid rgba(124,58,237,.35)}
+    .meta{color:var(--fade);font-size:12px;margin-top:6px}
+    .srcs a{color:#a78bfa;text-decoration:none}
+    .srcs a:hover{text-decoration:underline}
+    .tiny{font-size:12px;color:var(--fade)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <h1>Ask DocuMind</h1>
+    <span class="pill" id="status">ready</span>
+  </div>
+
+  <div class="card" style="padding:16px">
+    <div class="row" style="margin-bottom:8px">
+      <input id="q" placeholder="Type your question…" />
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <select id="dept">
+        <option value="">(any department)</option>
+        <option value="animal">animal</option>
+        <option value="labour">labour</option>
+        <option value="education">education</option>
+      </select>
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+      </select>
+      <select id="mode">
+        <option value="llm">LLM (longer, richer)</option>
+        <option value="local">Local (fast, no LLM)</option>
+      </select>
+      <button id="ask">Ask</button>
+    </div>
+    <div class="tiny">Backend: <code id="base"></code> • Shows answer text and compact sources; click any source to open.</div>
+  </div>
+
+  <div class="card chat" id="chat"></div>
+</div>
+
+<script>
+const BASE = (location.origin.includes(':5173') || location.origin.includes(':3000'))
+  ? 'http://'+location.hostname+':9000'
+  : location.origin.replace(':5173','').replace(':3000','');
+document.getElementById('base').textContent = BASE;
+
+const chat = document.getElementById('chat');
+const askBtn = document.getElementById('ask');
+const statusEl = document.getElementById('status');
+
+function addMsg(text, who='bot', meta='') {
+  const box = document.createElement('div');
+  box.className = 'msg ' + (who==='user'?'user':'bot');
+  box.innerText = text;
+  chat.appendChild(box);
+  if (meta) {
+    const m = document.createElement('div');
+    m.className = 'meta';
+    m.innerText = meta;
+    chat.appendChild(m);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function sourcesLine(citations) {
+  if (!Array.isArray(citations) || !citations.length) return '';
+  const parts = citations.map(c => {
+    const doc = c.doc_id || '?';
+    const chunks = Array.isArray(c.chunks) && c.chunks.length ? ('#'+c.chunks.join(',')) : '';
+    return `${doc}${chunks}`;
+  });
+  return 'Sources: [' + parts.join('; ') + ']';
+}
+
+// Attempt to turn doc_id into a link if your backend serves PDFs under /files
+function sourceLinks(citations) {
+  if (!Array.isArray(citations) || !citations.length) return '';
+  const div = document.createElement('div');
+  div.className = 'srcs tiny';
+  div.innerHTML = citations.map(c => {
+    const id = c.doc_id || '?';
+    const label = id + (c.chunks?.length ? ('#'+c.chunks.join(',')) : '');
+    // naive guess at a PDF path; adjust to your real URL scheme if needed
+    const href = BASE + '/files/pdfs/' + (id.startsWith('ANI') ? 'animal' : 'misc') + '/en/' + (id.replace(/\D+/g,'')||'1') + '.pdf';
+    return `<a href="${href}" target="_blank" rel="noopener">${label}</a>`;
+  }).join(' · ');
+  return div;
+}
+
+async function ask() {
+  const q = document.getElementById('q').value.trim();
+  const dept = document.getElementById('dept').value.trim();
+  const lang = document.getElementById('lang').value;
+  const mode = document.getElementById('mode').value;
+
+  if (!q) return;
+
+  addMsg(q, 'user');
+  askBtn.disabled = true; statusEl.textContent = 'thinking…';
+
+  // Optional per-request overrides:
+  // mode=local → ask backend to avoid LLM by appending ?llm=0
+  const url = new URL(BASE + '/api/answer');
+  url.searchParams.set('q', q);
+  if (dept) url.searchParams.set('dept', dept);
+  url.searchParams.set('format', 'text');
+  url.searchParams.set('lang', lang);
+  if (mode === 'local') url.searchParams.set('llm', '0'); // backend: treat this as no-LLM hint
+
+  let data;
+  try {
+    const resp = await fetch(url.toString(), { method: 'GET' });
+    data = await resp.json();
+  } catch (e) {
+    addMsg('Network error contacting DocuMind backend.', 'bot');
+    askBtn.disabled = false; statusEl.textContent = 'error';
+    return;
+  }
+
+  const ans = (data && data.answer) ? String(data.answer) : '(no answer)';
+  addMsg(ans, 'bot');
+
+  if (data && data.citations) {
+    const line = sourcesLine(data.citations);
+    if (line) addMsg(line, 'bot', 'citations');
+    const links = sourceLinks(data.citations);
+    if (links) chat.appendChild(links);
+  }
+
+  askBtn.disabled = false; statusEl.textContent = 'ready';
+}
+
+askBtn.addEventListener('click', ask);
+document.getElementById('q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') ask(); });
+</script>
+</body>
+</html>
