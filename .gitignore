@@ -1,36 +1,32 @@
-venv/
-node_modules/
-# .env*
-logs/
-uploads/
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+secrets/
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+venv/
+
+# Node / frontend
+node_modules/
 dist/
 build/
-venv/
-node_modules/
-# .env*
+*.log
+
+# App temp/data
 logs/
+data/
+ocr_tmp/
+run/
+tmp/
 uploads/
-__pycache__/
-*.pyc
-dist/
-build/
-venv/
-node_modules/
-.env*
-logs/
-uploads/
-__pycache__/
-*.pyc
-dist/
-build/
-venv/
-node_modules/
-.env*
-logs/
-uploads/
-__pycache__/
-*.pyc
-dist/
-build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
